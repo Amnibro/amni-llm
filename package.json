@@ -1,0 +1,50 @@
+{
+  "name": "amni-llm",
+  "version": "0.1.0",
+  "description": "Universal in-browser GGUF runtime. Load any GGUF model from HuggingFace, no pre-compilation step. WebLLM-compatible API.",
+  "type": "module",
+  "main": "amni-llm.js",
+  "exports": {
+    ".": "./amni-llm.js",
+    "./registry": "./registry.js"
+  },
+  "files": [
+    "amni-llm.js",
+    "registry.js",
+    "coi-sw.js",
+    "coi-register.js",
+    "index.html",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "llm",
+    "gguf",
+    "in-browser",
+    "wllama",
+    "llama.cpp",
+    "webgpu",
+    "webllm",
+    "client-side",
+    "private-ai",
+    "huggingface"
+  ],
+  "author": "Amnibro / Amni-Scient",
+  "license": "MIT",
+  "homepage": "https://example.com/amni-llm.html",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Amnibro/amni-llm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Amnibro/amni-llm/issues"
+  },
+  "dependencies": {
+    "@wllama/wllama": "^2.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@wllama/wllama": {
+      "optional": true
+    }
+  }
+}
