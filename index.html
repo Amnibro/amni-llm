@@ -334,7 +334,15 @@ async function loadModel(spec){
   });
   try {
     await engine.load(spec);
-    addMsg('system', `Loaded: ${engine.getModelInfo().name}`);
+    const info = engine && engine.getModelInfo ? engine.getModelInfo() : null;
+    if (!engine) { addMsg('system', '⚠ Engine became null during load — see console.'); return; }
+    if (!info) { addMsg('system', '⚠ Load returned but modelInfo is null. WGPU error: ' + (engine.getLastWgpuError && engine.getLastWgpuError() || 'none captured') + '\nLikely both WGPU and wllama-CPU failed silently.'); status.textContent = 'Load failed (modelInfo null)'; status.className = 'status err'; return; }
+    const backendLabel = info.backend === 'amni-wgpu' ? `WGPU [${info.adapter?.vendor||'?'} ${info.adapter?.architecture||''}${info.hasF16?', f16':', f32 fallback'}]` : 'CPU (wllama WASM)';
+    addMsg('system', `Loaded: ${info.name||info.id} — backend: ${backendLabel}`);
+    const wgpuErr = engine.getLastWgpuError && engine.getLastWgpuError();
+    if (wgpuErr && info.backend !== 'amni-wgpu') {
+      addMsg('system', '⚠ WGPU was attempted but failed. Reason:\n' + wgpuErr);
+    }
     $('send-btn').disabled = false;
     $('unload-btn').disabled = false;
   } catch(e) {
@@ -374,7 +382,7 @@ $('file-load-btn').addEventListener('click', () => {
 
 const history = [];
 async function send(){
-  if(!engine) return;
+  if(!engine || !engine.isReady()) { addMsg('system', 'Model still loading — wait for "backend: ..." status before chatting.'); return; }
   const ti = $('user-input');
   const q = ti.value.trim();
   if(!q) return;

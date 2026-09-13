@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>GGUF Parser Smoke Test &mdash; Amni-LLM</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono','SF Mono',Consolas,monospace;background:#0a0a0a;color:#e0e0e0;padding:24px;line-height:1.55}
+h1{color:#7cf;font-size:1.1rem;letter-spacing:2px;margin-bottom:.6rem}
+p{color:#888;font-size:.78rem;margin-bottom:1rem}
+button,input[type=file]{background:#7cf;color:#000;border:0;padding:7px 14px;margin:3px 4px 3px 0;cursor:pointer;font-family:inherit;font-size:.78rem;font-weight:600;letter-spacing:.5px;border-radius:3px}
+button:hover{opacity:.82}
+input[type=file]{background:#161616;color:#ccc;border:1px dashed #333;padding:6px}
+.urlrow{display:flex;gap:6px;margin:8px 0}
+.urlrow input{flex:1;background:#161616;border:1px solid #333;color:#e0e0e0;padding:7px 10px;font-family:inherit;font-size:.78rem;border-radius:3px}
+pre{background:#161616;padding:14px;border-radius:4px;overflow-x:auto;border:1px solid #1f1f1f;font-size:.78rem;color:#cfd;margin-top:1rem;white-space:pre-wrap;word-break:break-word}
+.err{color:#f55}
+.ok{color:#5d6}
+</style></head><body>
+<h1>GGUF PARSER SMOKE TEST</h1>
+<p>Loads only the first ~4 MB of each model (header + metadata + tensor table). No tensor weights are downloaded unless you click "Read tensor". Verifies V1/V2/V3 parsing on real GGUF.</p>
+<div id="btns"></div>
+<div class="urlrow"><input id="custom-url" type="url" placeholder="Or paste any GGUF URL: https://huggingface.co/.../resolve/main/...gguf"><button id="custom-go">Parse URL</button></div>
+<input type="file" id="local-file" accept=".gguf">
+<pre id="out">Idle. Pick a model above or paste a URL.</pre>
+<script type="module">
+import {loadGGUF,summarize,readTensorBytes,GGML_TYPE_NAME} from '../backends/wgpu/gguf.js';
+const MODELS=[
+{id:'Qwen3.5-0.8B-Q4_K_M (508 MB)',url:'https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF/resolve/main/Qwen3.5-0.8B-Q4_K_M.gguf'},
+{id:'Qwen3.5-4B-Q4_K_M (2.6 GB)',url:'https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q4_K_M.gguf'},
+{id:'Qwen2.5-Math-7B-Q4_K_M (4.7 GB)',url:'https://huggingface.co/Qwen/Qwen2.5-Math-7B-Instruct-GGUF/resolve/main/qwen2.5-math-7b-instruct-q4_k_m.gguf'}
+];
+const out=document.getElementById('out'),btns=document.getElementById('btns');
+let lastLoaded=null;
+function show(text,cls){out.textContent=text;out.className=cls||'';}
+async function parseAndShow(label,source){show('Parsing '+label+'...');const t0=performance.now();try{const g=await loadGGUF(source);lastLoaded=g;const s=summarize(g);const tensorList=Array.from(g.tensors.values()).slice(0,6).map(t=>t.name+' ['+t.shape.join('×')+'] '+t.dtypeName).join('\n  ');show('GGUF parsed in '+Math.round(performance.now()-t0)+' ms\n\n'+JSON.stringify(s,null,2)+'\n\nFirst 6 tensors:\n  '+tensorList+'\n\nTotal tensors: '+g.tensors.size+'\nClick a tensor name to fetch its bytes:\n'+Array.from(g.tensors.keys()).slice(0,12).map(n=>'  '+n).join('\n'),'ok');renderTensorButtons(g);}catch(e){show('ERROR: '+e.message+'\n\n'+e.stack,'err');}}
+function renderTensorButtons(g){const wrap=document.createElement('div');wrap.style.marginTop='10px';Array.from(g.tensors.keys()).slice(0,5).forEach(name=>{const b=document.createElement('button');b.textContent='Read '+name;b.style.fontSize='.7rem';b.onclick=async()=>{const t0=performance.now();try{const bytes=await readTensorBytes(g,name);const t=g.tensors.get(name);show('Read tensor '+name+'\n  shape: ['+t.shape.join('×')+']\n  dtype: '+t.dtypeName+'\n  bytes: '+bytes.length.toLocaleString()+'\n  fetch time: '+Math.round(performance.now()-t0)+' ms\n  first 32 bytes (hex): '+Array.from(bytes.slice(0,32)).map(b=>b.toString(16).padStart(2,'0')).join(' '),'ok');}catch(e){show('ERROR reading '+name+': '+e.message,'err');}};wrap.appendChild(b);});out.parentNode.insertBefore(wrap,out.nextSibling);}
+MODELS.forEach(m=>{const b=document.createElement('button');b.textContent=m.id;b.onclick=()=>parseAndShow(m.id,m.url);btns.appendChild(b);});
+document.getElementById('custom-go').onclick=()=>{const u=document.getElementById('custom-url').value.trim();u?parseAndShow(u,u):show('Enter a URL first.','err');};
+document.getElementById('local-file').onchange=e=>{const f=e.target.files[0];f&&parseAndShow(f.name,f);};
+</script></body></html>
