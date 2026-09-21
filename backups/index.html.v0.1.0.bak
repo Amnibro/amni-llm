@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Amni-LLM &mdash; Universal In-Browser GGUF Runtime | AMNI-SCIENT</title>
+<meta name="description" content="Amni-LLM: load any GGUF model in the browser. Built-in HuggingFace search, one-click install, arbitrary URL, local file. WebLLM-compatible API.">
+<meta name="keywords" content="amni-llm,in-browser llm,gguf browser,llama.cpp wasm,huggingface search,client-side ai,private ai,wllama">
+<link rel="canonical" href="https://amni-scient.com/lib/amni-llm/">
+<script src="./coi-register.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--panel:#111;--panel2:#161616;--border:#1f1f1f;--accent:#7cf;--accent2:#a8f;--text:#e0e0e0;--dim:#888;--ok:#5d6;--warn:#fa3;--err:#f55;--font:'JetBrains Mono','SF Mono',Consolas,monospace}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.55;min-height:100vh}
+a{color:var(--accent)}
+header{padding:1.4rem 1.5rem 1rem;border-bottom:1px solid var(--border);background:var(--panel)}
+header h1{font-size:1.4rem;font-weight:700;letter-spacing:2px;color:var(--accent)}
+header h1 span{color:var(--dim);font-weight:400}
+header .sub{color:var(--dim);font-size:.78rem;margin-top:.3rem}
+.wrap{max-width:1100px;margin:0 auto;padding:1.4rem 1.5rem}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;margin-bottom:1rem}
+.card h2{color:var(--accent);font-size:.95rem;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.7rem}
+.card h3{color:var(--text);font-size:.82rem;letter-spacing:1px;text-transform:uppercase;margin:.7rem 0 .4rem}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+label{font-size:.72rem;color:var(--dim);letter-spacing:.05em;text-transform:uppercase;display:block;margin-bottom:.25rem}
+select,input[type="text"],input[type="url"],input[type="search"],textarea{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:4px;font-family:var(--font);font-size:.85rem;outline:none;transition:border-color .15s;width:100%}
+select:focus,input:focus,textarea:focus{border-color:var(--accent)}
+button{background:var(--accent);color:var(--bg);border:none;padding:7px 14px;border-radius:4px;font-family:var(--font);font-size:.78rem;font-weight:700;letter-spacing:1px;cursor:pointer;transition:opacity .15s,background .15s}
+button:hover{opacity:.85}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button.ghost:hover{background:var(--accent);color:var(--bg)}
+button.danger{background:transparent;color:var(--err);border:1px solid var(--err)}
+button.danger:hover{background:var(--err);color:var(--bg)}
+button.sm{padding:4px 8px;font-size:.7rem}
+button:disabled{opacity:.4;cursor:not-allowed}
+.tabbar{display:flex;gap:.4rem;margin-bottom:.7rem;flex-wrap:wrap}
+.tabbar button{background:var(--panel2);color:var(--dim);border:1px solid var(--border)}
+.tabbar button.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.progress{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;margin-top:.4rem}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s;width:0%}
+.status{font-size:.75rem;color:var(--dim);margin-top:.3rem;font-variant-numeric:tabular-nums}
+.status.ok{color:var(--ok)}.status.err{color:var(--err)}.status.warn{color:var(--warn)}
+.chat{height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;background:var(--panel2);padding:.7rem;font-size:.83rem;line-height:1.55;display:flex;flex-direction:column;gap:.55rem}
+.msg{padding:.55rem .7rem;border-radius:4px;max-width:90%}
+.msg.user{background:rgba(124,200,255,0.08);border-left:3px solid var(--accent);align-self:flex-end}
+.msg.assistant{background:rgba(168,140,255,0.06);border-left:3px solid var(--accent2);align-self:flex-start;white-space:pre-wrap}
+.msg.system{background:rgba(255,170,50,0.08);border-left:3px solid var(--warn);font-size:.76rem;color:var(--dim)}
+.composer{display:flex;gap:.5rem;margin-top:.6rem}
+.composer textarea{flex:1;min-height:60px;resize:vertical}
+.tag{display:inline-block;padding:2px 7px;border-radius:999px;background:rgba(124,200,255,0.1);color:var(--accent);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;margin-right:3px}
+.tag.tier-mobile{background:rgba(93,229,160,0.1);color:#5de5a0}
+.tag.tier-balanced{background:rgba(124,200,255,0.1);color:var(--accent)}
+.tag.tier-reasoning{background:rgba(168,140,255,0.1);color:var(--accent2)}
+.tag.tier-math{background:rgba(255,170,50,0.1);color:var(--warn)}
+.notice{font-size:.78rem;color:var(--dim);background:rgba(255,170,50,0.06);border-left:3px solid var(--warn);padding:.6rem .8rem;border-radius:3px;margin-bottom:.8rem;line-height:1.6}
+.model-card{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:.7rem .9rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;gap:.7rem;flex-wrap:wrap}
+.model-card .meta{flex:1;min-width:200px}
+.model-card .ref{font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:.2rem}
+.model-card .blurb{font-size:.72rem;color:var(--dim);line-height:1.45}
+.model-card .actions{display:flex;gap:.4rem;align-items:center}
+.search-row{display:flex;gap:.4rem;margin-bottom:.6rem}
+.search-row input{flex:1}
+.hf-result{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:.6rem .8rem;margin-bottom:.4rem}
+.hf-result .repo{font-size:.78rem;font-weight:600;color:var(--accent)}
+.hf-result .repo a{color:inherit;text-decoration:none}
+.hf-result .repo a:hover{text-decoration:underline}
+.hf-result .meta{font-size:.68rem;color:var(--dim);margin:.15rem 0 .35rem}
+.hf-files{margin-top:.4rem;display:none}
+.hf-files.open{display:block}
+.hf-file-row{display:flex;justify-content:space-between;align-items:center;padding:.3rem .5rem;border-radius:3px;font-size:.74rem;border-top:1px dashed var(--border)}
+.hf-file-row:hover{background:rgba(124,200,255,0.05)}
+.hf-file-row code{font-size:.7rem;color:var(--text)}
+pre{background:var(--panel2);color:var(--text);padding:.7rem .9rem;border-radius:4px;overflow-x:auto;font-size:.78rem;line-height:1.5;border:1px solid var(--border)}
+code{background:var(--panel2);color:var(--accent);padding:1px 5px;border-radius:2px;font-size:.78rem}
+footer{padding:1.5rem;text-align:center;color:var(--dim);font-size:.7rem;border-top:1px solid var(--border);margin-top:2rem}
+</style>
+</head>
+<body>
+<header>
+<h1>AMNI<span>-LLM</span></h1>
+<div class="sub">Universal in-browser GGUF runtime &middot; 4 SOTA defaults &middot; HuggingFace search &middot; one-click install &middot; arbitrary URL &middot; local file</div>
+</header>
+<div class="wrap">
+
+<div class="notice">
+<strong style="color:var(--text)">Honest stack:</strong> Amni-LLM = Amni-Scient loader/registry/UI/API on top of <a href="https://github.com/ngxson/wllama" target="_blank" rel="noopener">wllama</a> (MIT-licensed llama.cpp WASM port). The point: any GGUF on HuggingFace works the day it's published &mdash; no waiting for an MLC pre-compile.
+<br><br>
+<span id="coi-status" style="font-size:.72rem"></span>
+</div>
+
+<div class="card">
+<h2>Load a model</h2>
+<div class="tabbar">
+<button class="active" data-tab="defaults">SOTA defaults</button>
+<button data-tab="installed">Installed</button>
+<button data-tab="search">HF search</button>
+<button data-tab="url">Custom URL</button>
+<button data-tab="file">Local file</button>
+</div>
+
+<div id="pane-defaults">
+<div id="default-list"></div>
+</div>
+
+<div id="pane-installed" style="display:none">
+<div id="installed-list"><div class="status">Nothing installed yet. Use HF search to add models.</div></div>
+</div>
+
+<div id="pane-search" style="display:none">
+<label>Search HuggingFace for GGUF models</label>
+<div class="search-row">
+<input type="search" id="hf-q" placeholder="e.g. qwen 3.5, llama 4, mistral, nemo, gemma...">
+<button id="hf-search-btn">Search</button>
+</div>
+<div id="hf-results"></div>
+<div class="status" id="hf-status">Type a query and press Search. Results come from <code>huggingface.co/api/models?library=gguf</code>.</div>
+</div>
+
+<div id="pane-url" style="display:none">
+<label>Direct GGUF URL (use the resolve/main form)</label>
+<input type="url" id="custom-url" placeholder="https://huggingface.co/&lt;org&gt;/&lt;repo&gt;-GGUF/resolve/main/model.Q4_K_M.gguf">
+<div class="row" style="margin-top:.5rem">
+<button id="url-load-btn">Load this URL</button>
+<button id="url-install-btn" class="ghost">Install (save to my list)</button>
+</div>
+</div>
+
+<div id="pane-file" style="display:none">
+<label>Local .gguf file</label>
+<input type="file" id="local-file" accept=".gguf">
+<div class="row" style="margin-top:.5rem">
+<button id="file-load-btn">Load file</button>
+</div>
+<div class="status">Loaded entirely in-memory; no upload to any server.</div>
+</div>
+
+<div class="progress"><div id="progress-fill" class="progress-fill"></div></div>
+<div class="status" id="load-status">Idle. Pick a model and press Load.</div>
+<div class="row" style="margin-top:.6rem">
+<button id="unload-btn" class="ghost" disabled>Unload current model</button>
+</div>
+</div>
+
+<div class="card">
+<h2>Chat</h2>
+<div class="chat" id="chat-log"></div>
+<div class="composer">
+<textarea id="user-input" placeholder="Ask the loaded model anything... &#x23ce; to send (Shift+&#x23ce; for newline)"></textarea>
+<button id="send-btn" disabled>Send</button>
+</div>
+</div>
+
+<div class="card">
+<h2>API quick reference</h2>
+<pre>import { createEngine } from '/lib/amni-llm/amni-llm.js';
+
+// SOTA default
+const e = await createEngine('Qwen3-4B-Q4_K_M');
+
+// Any HuggingFace GGUF (the killer feature)
+const e = await createEngine({
+  url: 'https://huggingface.co/&lt;org&gt;/&lt;repo&gt;/resolve/main/model.Q4_K_M.gguf'
+});
+
+// Local file
+const e = await createEngine({ file: fileInput.files[0] });
+
+// Chat (WebLLM-compatible)
+const r = await e.chatCompletions.create({
+  messages: [{role:'user', content:'Hello'}],
+  temperature: 0.4
+});</pre>
+</div>
+
+</div>
+
+<footer>
+&copy; 2025-2026 Amni-Scient &middot; Amni-LLM v0.1.0 &middot; Backend: <a href="https://github.com/ngxson/wllama" target="_blank" rel="noopener">wllama</a> (llama.cpp WASM, MIT) &middot;
+<a href="/">amni-scient.com</a>
+</footer>
+
+<script type="module">
+import { AmniLLMEngine, AMNI_LLM_VERSION, isCrossOriginIsolated } from './amni-llm.js';
+import { DEFAULT_MODELS, listAll, getInstalled, saveInstalled, removeInstalled, getModel, hfSearchModels, hfListGgufFiles, hfResolve } from './registry.js';
+const coiEl = document.getElementById('coi-status');
+if (coiEl) coiEl.innerHTML = isCrossOriginIsolated()
+  ? '<span style="color:var(--ok)">✓ Cross-origin isolated</span> &mdash; multi-thread WASM + SharedArrayBuffer enabled. Larger models will load reliably.'
+  : '<span style="color:var(--warn)">⚠ Cross-origin isolation OFF</span> &mdash; single-thread WASM only, memory ceiling lower (~1 GB on mobile, ~2 GB on desktop). Service worker is registering on first load; <strong>refresh the page once</strong> to pick up COOP/COEP headers and run multi-thread.';
+
+const $ = id => document.getElementById(id);
+const fmtSize = mb => mb >= 1000 ? (mb/1000).toFixed(1)+' GB' : mb+' MB';
+const escHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+document.querySelectorAll('.tabbar button[data-tab]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.tabbar button[data-tab]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    ['defaults','installed','search','url','file'].forEach(t => $('pane-'+t).style.display = (t === b.dataset.tab) ? 'block' : 'none');
+  });
+});
+
+function renderDefaultList(){
+  const wrap = $('default-list');
+  wrap.innerHTML = '';
+  Object.entries(DEFAULT_MODELS).forEach(([id, m]) => {
+    const card = document.createElement('div');
+    card.className = 'model-card';
+    card.innerHTML = `<div class="meta">
+      <div class="ref">${escHtml(m.name)} <span class="tag tier-${m.tier}">${m.tier}</span> <span class="tag">${m.quant}</span> <span class="tag">${fmtSize(m.sizeMB)}</span></div>
+      <div class="blurb">${escHtml(m.blurb)} &middot; <a href="https://huggingface.co/${m.hfRepo}" target="_blank" rel="noopener">${escHtml(m.hfRepo)}</a></div>
+    </div>
+    <div class="actions"><button data-load="${id}">Load</button></div>`;
+    wrap.appendChild(card);
+  });
+  wrap.querySelectorAll('[data-load]').forEach(b => b.addEventListener('click', () => loadModel(b.dataset.load)));
+}
+
+function renderInstalledList(){
+  const wrap = $('installed-list');
+  const inst = getInstalled();
+  const ids = Object.keys(inst);
+  if(ids.length === 0){ wrap.innerHTML = '<div class="status">Nothing installed yet. Use HF search to add models.</div>'; return; }
+  wrap.innerHTML = '';
+  ids.forEach(id => {
+    const m = inst[id];
+    const card = document.createElement('div');
+    card.className = 'model-card';
+    card.innerHTML = `<div class="meta">
+      <div class="ref">${escHtml(m.name||id)} <span class="tag">${escHtml(m.quant||'?')}</span>${m.sizeMB?` <span class="tag">${fmtSize(m.sizeMB)}</span>`:''}</div>
+      <div class="blurb">${escHtml(m.hfUrl||m.url||'')}</div>
+    </div>
+    <div class="actions"><button data-load-inst="${id}">Load</button><button class="danger sm" data-rm="${id}">Remove</button></div>`;
+    wrap.appendChild(card);
+  });
+  wrap.querySelectorAll('[data-load-inst]').forEach(b => b.addEventListener('click', () => {
+    const m = getInstalled()[b.dataset.loadInst];
+    loadModel({url: m.hfUrl||m.url, name: m.name, id: b.dataset.loadInst});
+  }));
+  wrap.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+    if(!confirm('Remove this installed model from your list? (Browser cache for the weights stays.)')) return;
+    removeInstalled(b.dataset.rm);
+    renderInstalledList();
+  }));
+}
+
+async function runHfSearch(){
+  const q = $('hf-q').value.trim();
+  if(!q){ $('hf-status').textContent = 'Enter a search query first.'; return; }
+  const btn = $('hf-search-btn');
+  btn.disabled = true;
+  $('hf-status').textContent = 'Searching HuggingFace...';
+  $('hf-status').className = 'status warn';
+  try {
+    const results = await hfSearchModels(q, 25);
+    if(!results.length){ $('hf-status').textContent = 'No GGUF models matched. Try broader keywords.'; $('hf-status').className = 'status'; $('hf-results').innerHTML = ''; btn.disabled = false; return; }
+    $('hf-status').textContent = `${results.length} GGUF model${results.length===1?'':'s'} found.`;
+    $('hf-status').className = 'status ok';
+    const wrap = $('hf-results');
+    wrap.innerHTML = '';
+    results.forEach(r => {
+      const id = r.id || r.modelId;
+      const dl = r.downloads || 0;
+      const lk = r.likes || 0;
+      const updated = (r.lastModified||'').slice(0,10);
+      const card = document.createElement('div');
+      card.className = 'hf-result';
+      card.innerHTML = `<div class="repo"><a href="https://huggingface.co/${id}" target="_blank" rel="noopener">${escHtml(id)}</a></div>
+      <div class="meta">↓ ${dl.toLocaleString()} &middot; ♡ ${lk.toLocaleString()}${updated?' &middot; '+escHtml(updated):''}</div>
+      <button class="ghost sm" data-list-files="${id}">List GGUF files &amp; install</button>
+      <div class="hf-files" data-files-for="${id}"></div>`;
+      wrap.appendChild(card);
+    });
+    wrap.querySelectorAll('[data-list-files]').forEach(b => b.addEventListener('click', () => listGgufFiles(b.dataset.listFiles, b)));
+  } catch(e) {
+    $('hf-status').textContent = 'Search failed: ' + (e.message||e);
+    $('hf-status').className = 'status err';
+  }
+  btn.disabled = false;
+}
+$('hf-search-btn').addEventListener('click', runHfSearch);
+$('hf-q').addEventListener('keydown', e => { if(e.key==='Enter') runHfSearch(); });
+
+async function listGgufFiles(repoId, btn){
+  const wrap = document.querySelector(`[data-files-for="${repoId}"]`);
+  if(wrap.classList.contains('open')){ wrap.classList.remove('open'); return; }
+  btn.disabled = true;
+  wrap.innerHTML = '<div class="status">Loading file list...</div>';
+  wrap.classList.add('open');
+  try {
+    const files = await hfListGgufFiles(repoId);
+    if(!files.length){ wrap.innerHTML = '<div class="status err">No .gguf files in this repo.</div>'; btn.disabled = false; return; }
+    wrap.innerHTML = files.sort((a,b)=>a.sizeBytes-b.sizeBytes).map(f => `<div class="hf-file-row">
+      <span><code>${escHtml(f.path)}</code> <span class="tag">${escHtml(f.quant)}</span> <span style="color:var(--dim);font-size:.7rem">${f.sizeMB?fmtSize(f.sizeMB):''}</span></span>
+      <span><button class="sm" data-load-hf="${repoId}|${escHtml(f.path)}|${f.sizeMB}|${escHtml(f.quant)}">Load</button> <button class="ghost sm" data-install-hf="${repoId}|${escHtml(f.path)}|${f.sizeMB}|${escHtml(f.quant)}">Install</button></span>
+    </div>`).join('');
+    wrap.querySelectorAll('[data-load-hf]').forEach(b => b.addEventListener('click', () => {
+      const [repo, path, sizeMB, quant] = b.dataset.loadHf.split('|');
+      loadModel({url: hfResolve(repo, path), name: repo+'/'+path, id: 'hf:'+repo+':'+path});
+    }));
+    wrap.querySelectorAll('[data-install-hf]').forEach(b => b.addEventListener('click', () => {
+      const [repo, path, sizeMB, quant] = b.dataset.installHf.split('|');
+      const id = 'hf:'+repo+':'+path;
+      saveInstalled({id, name: repo.split('/').pop()+' · '+quant, hfRepo: repo, hfFile: path, hfUrl: hfResolve(repo, path), sizeMB: parseInt(sizeMB)||0, quant, ctx: 4096});
+      addMsg('system', 'Installed: '+id+' (visible under the Installed tab)');
+      renderInstalledList();
+    }));
+  } catch(e) {
+    wrap.innerHTML = '<div class="status err">List failed: '+escHtml(e.message||String(e))+'</div>';
+  }
+  btn.disabled = false;
+}
+
+let engine = null;
+const log = $('chat-log');
+function addMsg(role, text){
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  d.textContent = text;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+  return d;
+}
+addMsg('system', `Amni-LLM v${AMNI_LLM_VERSION} ready. Pick a SOTA default, search HuggingFace, paste a URL, or load a local file.`);
+
+async function loadModel(spec){
+  if(engine) { try { await engine.unload(); } catch{} engine = null; }
+  $('progress-fill').style.width = '0%';
+  $('send-btn').disabled = true;
+  $('unload-btn').disabled = true;
+  const status = $('load-status');
+  engine = new AmniLLMEngine({
+    onProgress: p => { $('progress-fill').style.width = (p.pct||0) + '%'; },
+    onStatus: (s, m) => { status.textContent = m; status.className = 'status ' + (s==='ready'?'ok':s==='downloading'?'warn':''); }
+  });
+  try {
+    await engine.load(spec);
+    addMsg('system', `Loaded: ${engine.getModelInfo().name}`);
+    $('send-btn').disabled = false;
+    $('unload-btn').disabled = false;
+  } catch(e) {
+    status.textContent = 'Load failed: ' + (e.message || e);
+    status.className = 'status err';
+    addMsg('system', 'Load failed: ' + (e.message || e));
+    engine = null;
+  }
+}
+$('unload-btn').addEventListener('click', async () => {
+  if(!engine) return;
+  await engine.unload();
+  engine = null;
+  $('send-btn').disabled = true;
+  $('unload-btn').disabled = true;
+  addMsg('system', 'Model unloaded.');
+});
+$('url-load-btn').addEventListener('click', () => {
+  const u = $('custom-url').value.trim();
+  if(!u){ alert('Enter a URL first.'); return; }
+  loadModel({url: u, name: u.split('/').pop()});
+});
+$('url-install-btn').addEventListener('click', () => {
+  const u = $('custom-url').value.trim();
+  if(!u){ alert('Enter a URL first.'); return; }
+  const name = u.split('/').pop();
+  const id = 'url:'+u;
+  saveInstalled({id, name, hfUrl: u, sizeMB: 0, quant: '?', ctx: 4096});
+  addMsg('system', 'Installed: '+name);
+  renderInstalledList();
+});
+$('file-load-btn').addEventListener('click', () => {
+  const f = $('local-file').files[0];
+  if(!f){ alert('Pick a .gguf file first.'); return; }
+  loadModel({file: f});
+});
+
+const history = [];
+async function send(){
+  if(!engine) return;
+  const ti = $('user-input');
+  const q = ti.value.trim();
+  if(!q) return;
+  ti.value = '';
+  addMsg('user', q);
+  history.push({role:'user', content:q});
+  const out = addMsg('assistant', '');
+  $('send-btn').disabled = true;
+  try {
+    let acc = '';
+    for await (const chunk of engine.chatStream(history, {temperature:0.5, max_tokens:512})) {
+      acc = chunk.delta || acc;
+      out.textContent = acc;
+      log.scrollTop = log.scrollHeight;
+    }
+    history.push({role:'assistant', content:acc});
+  } catch(e) {
+    out.textContent = 'Error: ' + (e.message||e);
+    out.className = 'msg system';
+  }
+  $('send-btn').disabled = false;
+}
+$('send-btn').addEventListener('click', send);
+$('user-input').addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+
+renderDefaultList();
+renderInstalledList();
+</script>
+</body>
+</html>
