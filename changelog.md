@@ -1,5 +1,12 @@
 # Amni-LLM Changelog
 
+## Offline + new defaults — 2026-11-16 (working tree, not released)
+
+- Source synced to the deployed copy at amni-scient.com/lib/amni-llm/ (vendored wllama 3.13.0, SHA-256-pinned default downloads, Adam CAD shards, ptex.js). The deployed `amni-llm.js` no longer routes through `backends/wgpu/` (it uses wllama's own WebGPU offload); the wgpu backend and its tests stay in the repo.
+- Offline: `coi-sw.js` now also caches the app shell (versioned `amni-llm-shell-v2`), `coi-register.js` registers it even when the host already sends COOP/COEP, wllama runs with `allowOffline`, the compat build is vendored (`vendor/wllama-compat-3.13.0/`, no jsDelivr), Install really downloads into OPFS, offline banner + HF search offline state, storage-quota errors.
+- Registry: IBM Granite 4.2 3B Q4_K_M (pinned rev + SHA-256), Qwen 3.8 27B listed as desktop-only (`browser:false`, cannot fit the 4 GB WASM memory cap).
+- Fix: chat stream showed only the last token (`acc = delta` -> `acc += delta`).
+
 ## v0.2.0-alpha — 2026-04-28 (CODE COMPLETE, NEEDS GPU VERIFICATION)
 
 **Decisions locked:**

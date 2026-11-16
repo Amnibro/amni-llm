@@ -2,15 +2,18 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<meta name="robots" content="noindex, follow">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Amni-LLM &mdash; Universal In-Browser GGUF Runtime | AMNI-SCIENT</title>
 <meta name="description" content="Amni-LLM: load any GGUF model in the browser. Built-in HuggingFace search, one-click install, arbitrary URL, local file. WebLLM-compatible API.">
 <meta name="keywords" content="amni-llm,in-browser llm,gguf browser,llama.cpp wasm,huggingface search,client-side ai,private ai,wllama">
-<link rel="canonical" href="https://example.com/lib/amni-llm/">
+<link rel="canonical" href="https://amni-scient.com/lib/amni-llm/">
 <script src="./coi-register.js"></script>
 <style>
+@font-face{font-family:Archivo;font-style:normal;font-weight:100 900;font-stretch:62% 125%;font-display:swap;src:url(/assets/fonts/archivo-var.woff2) format('woff2')}
+
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0a;--panel:#111;--panel2:#161616;--border:#1f1f1f;--accent:#7cf;--accent2:#a8f;--text:#e0e0e0;--dim:#888;--ok:#5d6;--warn:#fa3;--err:#f55;--font:'JetBrains Mono','SF Mono',Consolas,monospace}
+:root{--bg:#0a0a0a;--panel:#111;--panel2:#161616;--border:#1f1f1f;--accent:#7cf;--accent2:#a8f;--text:#e0e0e0;--dim:#888;--ok:#5d6;--warn:#fa3;--err:#f55;--font:"Archivo","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;--mono:'JetBrains Mono','SF Mono',Consolas,monospace}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.55;min-height:100vh}
 a{color:var(--accent)}
 header{padding:1.4rem 1.5rem 1rem;border-bottom:1px solid var(--border);background:var(--panel)}
@@ -18,7 +21,7 @@ header h1{font-size:1.4rem;font-weight:700;letter-spacing:2px;color:var(--accent
 header h1 span{color:var(--dim);font-weight:400}
 header .sub{color:var(--dim);font-size:.78rem;margin-top:.3rem}
 .wrap{max-width:1100px;margin:0 auto;padding:1.4rem 1.5rem}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;margin-bottom:1rem}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:1rem 1.2rem;margin-bottom:1rem}
 .card h2{color:var(--accent);font-size:.95rem;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.7rem}
 .card h3{color:var(--text);font-size:.82rem;letter-spacing:1px;text-transform:uppercase;margin:.7rem 0 .4rem}
 .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
@@ -47,11 +50,14 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .msg.system{background:rgba(255,170,50,0.08);border-left:3px solid var(--warn);font-size:.76rem;color:var(--dim)}
 .composer{display:flex;gap:.5rem;margin-top:.6rem}
 .composer textarea{flex:1;min-height:60px;resize:vertical}
-.tag{display:inline-block;padding:2px 7px;border-radius:999px;background:rgba(124,200,255,0.1);color:var(--accent);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;margin-right:3px}
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;background:rgba(124,200,255,0.1);color:var(--accent);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;margin-right:3px}
 .tag.tier-mobile{background:rgba(93,229,160,0.1);color:#5de5a0}
 .tag.tier-balanced{background:rgba(124,200,255,0.1);color:var(--accent)}
 .tag.tier-reasoning{background:rgba(168,140,255,0.1);color:var(--accent2)}
 .tag.tier-math{background:rgba(255,170,50,0.1);color:var(--warn)}
+.tag.tier-desktop,.tag.blocked{background:rgba(255,85,85,0.1);color:var(--err)}
+.tag.saved{background:rgba(93,229,160,0.1);color:#5de5a0}
+.model-card .note{font-size:.7rem;color:var(--warn);margin-top:.3rem;line-height:1.45}
 .notice{font-size:.78rem;color:var(--dim);background:rgba(255,170,50,0.06);border-left:3px solid var(--warn);padding:.6rem .8rem;border-radius:3px;margin-bottom:.8rem;line-height:1.6}
 .model-card{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:.7rem .9rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;gap:.7rem;flex-wrap:wrap}
 .model-card .meta{flex:1;min-width:200px}
@@ -73,20 +79,23 @@ button:disabled{opacity:.4;cursor:not-allowed}
 pre{background:var(--panel2);color:var(--text);padding:.7rem .9rem;border-radius:4px;overflow-x:auto;font-size:.78rem;line-height:1.5;border:1px solid var(--border)}
 code{background:var(--panel2);color:var(--accent);padding:1px 5px;border-radius:2px;font-size:.78rem}
 footer{padding:1.5rem;text-align:center;color:var(--dim);font-size:.7rem;border-top:1px solid var(--border);margin-top:2rem}
+input,select,textarea,pre,code,.log,.stat{font-family:var(--mono)}
 </style>
 </head>
 <body>
 <header>
 <h1>AMNI<span>-LLM</span></h1>
-<div class="sub">Universal in-browser GGUF runtime &middot; 4 SOTA defaults &middot; HuggingFace search &middot; one-click install &middot; arbitrary URL &middot; local file</div>
+<div class="sub">Universal in-browser GGUF runtime &middot; SOTA defaults &middot; HuggingFace search &middot; one-click install &middot; works offline once installed &middot; arbitrary URL &middot; local file</div>
 </header>
 <div class="wrap">
 
 <div class="notice">
-<strong style="color:var(--text)">Honest stack:</strong> Amni-LLM = Amni-Scient loader/registry/UI/API on top of <a href="https://github.com/ngxson/wllama" target="_blank" rel="noopener">wllama</a> (MIT-licensed llama.cpp WASM port). The point: any GGUF on HuggingFace works the day it's published &mdash; no waiting for an MLC pre-compile.
+<strong style="color:var(--text)">Stack:</strong> Amni-LLM = Amni-Scient loader/registry/UI/API on top of <a href="https://github.com/ngxson/wllama" target="_blank" rel="noopener">wllama</a> (MIT-licensed llama.cpp WASM port). The point: any GGUF on HuggingFace works the day it's published &mdash; no waiting for an MLC pre-compile.
 <br><br>
 <span id="coi-status" style="font-size:.72rem"></span>
 </div>
+
+<div class="notice" id="offline-banner" style="display:none;border-left-color:var(--accent)"><strong style="color:var(--text)">You are offline.</strong> Installed models and local .gguf files still work. HuggingFace search and new downloads need the internet.</div>
 
 <div class="card">
 <h2>Load a model</h2>
@@ -103,7 +112,8 @@ footer{padding:1.5rem;text-align:center;color:var(--dim);font-size:.7rem;border-
 </div>
 
 <div id="pane-installed" style="display:none">
-<div id="installed-list"><div class="status">Nothing installed yet. Use HF search to add models.</div></div>
+<div id="installed-list"><div class="status">Nothing installed yet. Use HF search or Custom URL to add models.</div></div>
+<div class="status" id="storage-status"></div>
 </div>
 
 <div id="pane-search" style="display:none">
@@ -131,7 +141,7 @@ footer{padding:1.5rem;text-align:center;color:var(--dim);font-size:.7rem;border-
 <div class="row" style="margin-top:.5rem">
 <button id="file-load-btn">Load file</button>
 </div>
-<div class="status">Loaded entirely in-memory; no upload to any server.</div>
+<div class="status">Loaded entirely in-memory; no upload to any server. Works offline.</div>
 </div>
 
 <div class="progress"><div id="progress-fill" class="progress-fill"></div></div>
@@ -175,12 +185,12 @@ const r = await e.chatCompletions.create({
 </div>
 
 <footer>
-&copy; 2025-2026 Amni-Scient &middot; Amni-LLM v0.1.0 &middot; Backend: <a href="https://github.com/ngxson/wllama" target="_blank" rel="noopener">wllama</a> (llama.cpp WASM, MIT) &middot;
-<a href="/">example.com</a>
+&copy; 2025-2026 Amniscient, LLC &middot; Amni-LLM v0.2.0-alpha &middot; Backend: <a href="https://github.com/ngxson/wllama" target="_blank" rel="noopener">wllama</a> (llama.cpp WASM, MIT) &middot;
+<a href="/">amni-scient.com</a>
 </footer>
 
 <script type="module">
-import { AmniLLMEngine, AMNI_LLM_VERSION, isCrossOriginIsolated } from './amni-llm.js';
+import { AmniLLMEngine, AMNI_LLM_VERSION, isCrossOriginIsolated, isCached, installUrl, isUrlInstalled, uninstallUrl, storageInfo } from './amni-llm.js';
 import { DEFAULT_MODELS, listAll, getInstalled, saveInstalled, removeInstalled, getModel, hfSearchModels, hfListGgufFiles, hfResolve } from './registry.js';
 const coiEl = document.getElementById('coi-status');
 if (coiEl) coiEl.innerHTML = isCrossOriginIsolated()
@@ -189,6 +199,10 @@ if (coiEl) coiEl.innerHTML = isCrossOriginIsolated()
 
 const $ = id => document.getElementById(id);
 const fmtSize = mb => mb >= 1000 ? (mb/1000).toFixed(1)+' GB' : mb+' MB';
+const online = () => navigator.onLine !== false;
+function syncOnline(){ $('offline-banner').style.display = online() ? 'none' : 'block'; $('hf-search-btn').disabled = !online(); if(!online()){ $('hf-status').textContent = 'You are offline. HuggingFace search needs the internet; installed models still work.'; $('hf-status').className = 'status warn'; } else if(/offline/.test($('hf-status').textContent)) { $('hf-status').textContent = 'Back online. Type a query and press Search.'; $('hf-status').className = 'status'; } }
+addEventListener('online', () => { syncOnline(); renderDefaultList(); });
+addEventListener('offline', () => { syncOnline(); renderDefaultList(); });
 const escHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 document.querySelectorAll('.tabbar button[data-tab]').forEach(b => {
@@ -205,12 +219,16 @@ function renderDefaultList(){
   Object.entries(DEFAULT_MODELS).forEach(([id, m]) => {
     const card = document.createElement('div');
     card.className = 'model-card';
+    const blocked = m.browser === false;
+    const src = m.hfRepo ? `<a href="https://huggingface.co/${m.hfRepo}" target="_blank" rel="noopener">${escHtml(m.hfRepo)}</a>` : 'amni-scient.com';
     card.innerHTML = `<div class="meta">
-      <div class="ref">${escHtml(m.name)} <span class="tag tier-${m.tier}">${m.tier}</span> <span class="tag">${m.quant}</span> <span class="tag">${fmtSize(m.sizeMB)}</span></div>
-      <div class="blurb">${escHtml(m.blurb)} &middot; <a href="https://huggingface.co/${m.hfRepo}" target="_blank" rel="noopener">${escHtml(m.hfRepo)}</a></div>
+      <div class="ref">${escHtml(m.name)} <span class="tag tier-${m.tier}">${escHtml(m.tier)}</span> <span class="tag">${escHtml(m.quant)}</span> <span class="tag">${fmtSize(m.sizeMB)}</span>${blocked?' <span class="tag blocked">desktop only</span>':''} <span class="tag saved" data-saved="${id}" style="display:none">saved offline</span></div>
+      <div class="blurb">${escHtml(m.blurb)} &middot; ${src}</div>
+      ${blocked?`<div class="note">${escHtml(m.browserNote||'Too large for the browser runtime.')} <a href="/amni-ai.html">Desktop Amni-AI</a></div>`:''}
     </div>
-    <div class="actions"><button data-load="${id}">Load</button></div>`;
+    <div class="actions">${blocked?'<button disabled title="Too large for the in-browser runtime">Not in browser</button>':`<button data-load="${id}" title="Downloads once, then stays saved on this device for offline use">Load</button>`}</div>`;
     wrap.appendChild(card);
+    if(!blocked) isCached(id).then(ok => { const t = wrap.querySelector(`[data-saved="${CSS.escape(id)}"]`); if(t) t.style.display = ok ? '' : 'none'; const b = wrap.querySelector(`[data-load="${CSS.escape(id)}"]`); if(b && !ok && !online()){ b.disabled = true; b.title = 'Not saved on this device; connect to download'; } }).catch(()=>{});
   });
   wrap.querySelectorAll('[data-load]').forEach(b => b.addEventListener('click', () => loadModel(b.dataset.load)));
 }
@@ -219,27 +237,35 @@ function renderInstalledList(){
   const wrap = $('installed-list');
   const inst = getInstalled();
   const ids = Object.keys(inst);
-  if(ids.length === 0){ wrap.innerHTML = '<div class="status">Nothing installed yet. Use HF search to add models.</div>'; return; }
+  showStorage();
+  if(ids.length === 0){ wrap.innerHTML = '<div class="status">Nothing installed yet. Use HF search or Custom URL to add models.</div>'; return; }
   wrap.innerHTML = '';
   ids.forEach(id => {
     const m = inst[id];
     const card = document.createElement('div');
     card.className = 'model-card';
     card.innerHTML = `<div class="meta">
-      <div class="ref">${escHtml(m.name||id)} <span class="tag">${escHtml(m.quant||'?')}</span>${m.sizeMB?` <span class="tag">${fmtSize(m.sizeMB)}</span>`:''}</div>
+      <div class="ref">${escHtml(m.name||id)} <span class="tag">${escHtml(m.quant||'?')}</span>${m.sizeMB?` <span class="tag">${fmtSize(m.sizeMB)}</span>`:''} <span class="tag" data-inst-state>checking…</span></div>
       <div class="blurb">${escHtml(m.hfUrl||m.url||'')}</div>
     </div>
-    <div class="actions"><button data-load-inst="${id}">Load</button><button class="danger sm" data-rm="${id}">Remove</button></div>`;
+    <div class="actions"><button class="ghost sm" data-dl-inst="${escHtml(id)}" style="display:none">Download for offline</button><button data-load-inst="${escHtml(id)}">Load</button><button class="danger sm" data-rm="${escHtml(id)}">Remove</button></div>`;
     wrap.appendChild(card);
+    isUrlInstalled(m.hfUrl||m.url).then(ok => {
+      const t = card.querySelector('[data-inst-state]'); t.textContent = ok ? 'saved offline' : 'not downloaded'; t.className = 'tag ' + (ok ? 'saved' : 'blocked');
+      card.querySelector('[data-dl-inst]').style.display = ok ? 'none' : '';
+      if(!ok && !online()) { const b = card.querySelector('[data-load-inst]'); b.disabled = true; b.title = 'Not saved on this device; connect to download'; card.querySelector('[data-dl-inst]').disabled = true; }
+    });
   });
+  wrap.querySelectorAll('[data-dl-inst]').forEach(b => b.addEventListener('click', () => { const m = getInstalled()[b.dataset.dlInst]; downloadInstalled(m); }));
   wrap.querySelectorAll('[data-load-inst]').forEach(b => b.addEventListener('click', () => {
     const m = getInstalled()[b.dataset.loadInst];
-    loadModel({url: m.hfUrl||m.url, name: m.name, id: b.dataset.loadInst});
+    loadModel({url: m.hfUrl||m.url, name: m.name, id: b.dataset.loadInst}).then(() => renderInstalledList());
   }));
   wrap.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
-    if(!confirm('Remove this installed model from your list? (Browser cache for the weights stays.)')) return;
+    if(!confirm('Remove this model and delete its saved file from this device?')) return;
+    const m = getInstalled()[b.dataset.rm];
     removeInstalled(b.dataset.rm);
-    renderInstalledList();
+    (m ? uninstallUrl(m.hfUrl||m.url) : Promise.resolve()).then(renderInstalledList);
   }));
 }
 
@@ -300,9 +326,10 @@ async function listGgufFiles(repoId, btn){
     wrap.querySelectorAll('[data-install-hf]').forEach(b => b.addEventListener('click', () => {
       const [repo, path, sizeMB, quant] = b.dataset.installHf.split('|');
       const id = 'hf:'+repo+':'+path;
-      saveInstalled({id, name: repo.split('/').pop()+' · '+quant, hfRepo: repo, hfFile: path, hfUrl: hfResolve(repo, path), sizeMB: parseInt(sizeMB)||0, quant, ctx: 4096});
-      addMsg('system', 'Installed: '+id+' (visible under the Installed tab)');
+      const m = {id, name: repo.split('/').pop()+' · '+quant, hfRepo: repo, hfFile: path, hfUrl: hfResolve(repo, path), sizeMB: parseInt(sizeMB)||0, quant, ctx: 4096};
+      saveInstalled(m);
       renderInstalledList();
+      downloadInstalled(m);
     }));
   } catch(e) {
     wrap.innerHTML = '<div class="status err">List failed: '+escHtml(e.message||String(e))+'</div>';
@@ -334,18 +361,12 @@ async function loadModel(spec){
   });
   try {
     await engine.load(spec);
-    const info = engine && engine.getModelInfo ? engine.getModelInfo() : null;
-    if (!engine) { addMsg('system', '⚠ Engine became null during load — see console.'); return; }
-    if (!info) { addMsg('system', '⚠ Load returned but modelInfo is null. WGPU error: ' + (engine.getLastWgpuError && engine.getLastWgpuError() || 'none captured') + '\nLikely both WGPU and wllama-CPU failed silently.'); status.textContent = 'Load failed (modelInfo null)'; status.className = 'status err'; return; }
-    const backendLabel = info.backend === 'amni-wgpu' ? `WGPU [${info.adapter?.vendor||'?'} ${info.adapter?.architecture||''}${info.hasF16?', f16':', f32 fallback'}]` : 'CPU (wllama WASM)';
-    addMsg('system', `Loaded: ${info.name||info.id} — backend: ${backendLabel}`);
-    const wgpuErr = engine.getLastWgpuError && engine.getLastWgpuError();
-    if (wgpuErr && info.backend !== 'amni-wgpu') {
-      addMsg('system', '⚠ WGPU was attempted but failed. Reason:\n' + wgpuErr);
-    }
+    addMsg('system', `Loaded: ${engine.getModelInfo().name}`);
+    renderDefaultList();
     $('send-btn').disabled = false;
     $('unload-btn').disabled = false;
   } catch(e) {
+    if(!online() && !/offline|too large|does not run/i.test(e.message||'')) e = new Error('You are offline and this model is not saved on this device. Installed models and local .gguf files still work. (' + (e.message||e) + ')');
     status.textContent = 'Load failed: ' + (e.message || e);
     status.className = 'status err';
     addMsg('system', 'Load failed: ' + (e.message || e));
@@ -370,9 +391,10 @@ $('url-install-btn').addEventListener('click', () => {
   if(!u){ alert('Enter a URL first.'); return; }
   const name = u.split('/').pop();
   const id = 'url:'+u;
-  saveInstalled({id, name, hfUrl: u, sizeMB: 0, quant: '?', ctx: 4096});
-  addMsg('system', 'Installed: '+name);
+  const m = {id, name, hfUrl: u, sizeMB: 0, quant: '?', ctx: 4096};
+  saveInstalled(m);
   renderInstalledList();
+  downloadInstalled(m);
 });
 $('file-load-btn').addEventListener('click', () => {
   const f = $('local-file').files[0];
@@ -382,7 +404,7 @@ $('file-load-btn').addEventListener('click', () => {
 
 const history = [];
 async function send(){
-  if(!engine || !engine.isReady()) { addMsg('system', 'Model still loading — wait for "backend: ..." status before chatting.'); return; }
+  if(!engine) return;
   const ti = $('user-input');
   const q = ti.value.trim();
   if(!q) return;
@@ -394,7 +416,7 @@ async function send(){
   try {
     let acc = '';
     for await (const chunk of engine.chatStream(history, {temperature:0.5, max_tokens:512})) {
-      acc = chunk.delta || acc;
+      acc += chunk.delta || '';
       out.textContent = acc;
       log.scrollTop = log.scrollHeight;
     }
@@ -410,8 +432,33 @@ $('user-input').addEventListener('keydown', e => {
   if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
 });
 
+async function showStorage(){
+  const i = await storageInfo().catch(()=>null);
+  $('storage-status').textContent = i && i.quota ? `Browser storage: ${fmtSize(Math.round(i.usage/1048576))} used of ${fmtSize(Math.round(i.quota/1048576))} available${i.persisted?' (persistent)':''}. Downloaded models are saved on this device and work offline.` : '';
+}
+let downloading = false;
+async function downloadInstalled(m){
+  if(!m) return;
+  if(downloading){ addMsg('system', 'Another download is in progress. Wait for it to finish.'); return; }
+  const url = m.hfUrl||m.url;
+  const status = $('load-status');
+  downloading = true;
+  status.textContent = `Downloading ${m.name} for offline use…`; status.className = 'status warn';
+  $('progress-fill').style.width = '0%';
+  try {
+    await installUrl(url, (m.sizeMB||0)*1048576, p => { $('progress-fill').style.width = (p.pct||0)+'%'; status.textContent = `Downloading ${m.name} for offline use… ${p.pct||0}%`; });
+    status.textContent = `Saved ${m.name} on this device. It now loads offline.`; status.className = 'status ok';
+    addMsg('system', 'Installed and saved for offline use: '+m.name+' (Installed tab)');
+  } catch(e) {
+    status.textContent = 'Download failed: ' + (e.message||e); status.className = 'status err';
+    addMsg('system', 'Download failed: ' + (e.message||e) + ' (still listed under Installed; press "Download for offline" to retry)');
+  }
+  downloading = false;
+  renderInstalledList();
+}
 renderDefaultList();
 renderInstalledList();
+syncOnline();
 </script>
 </body>
 </html>
